@@ -6,12 +6,13 @@ import time
 import win32gui
 import win32api
 import pyautogui
+# pywinauto
 from pywinauto import Application
 
 # numpy
 import numpy as np
 
-# opencv
+# opencv-python
 import cv2
 
 BIAS = (100, 100)
@@ -60,7 +61,7 @@ class Matcher:
 
     def image(self, template_path, threshold=0.8, scale_factor=0.9):
         if template_path is None:
-            template_path = 'donate_tip_2.png'
+            template_path = 'donate_tip.png'
         template = cv2.imread(template_path)
         target = self.win.capture_as_image()
         target = np.array(target)
@@ -318,6 +319,7 @@ def main(coord: Coordinates):
 
 if __name__ == '__main__':
     # initialize coordinate
+    # 4k, 150%
     c = Coordinates({
         # point_name: (x, y)
         # point_check: [(x, y), (R, G, B)]
@@ -373,5 +375,6 @@ if __name__ == '__main__':
         'long_collect': (560, 1320),
         'close_accelerate': (985, 725),
         'accelerate_check': [(985, 725), (197, 220, 255)],
+        'snow_monster_check': [(235, 620), (126, 49, 21)]
     })
     main(c)
