@@ -3,6 +3,7 @@
 import time
 from datetime import datetime
 import gc
+import tkinter as tk
 
 # pywin23
 import win32gui
@@ -324,10 +325,6 @@ class AutoTab:
     def filter_for_snow_monster(self):
         ...
 
-    @staticmethod
-    def prevent_screen_from_sleeping():
-        pyautogui.press('alt')
-
     def __call__(self):
         self.world_check()
         self.triangle_check()
@@ -336,14 +333,17 @@ class AutoTab:
         self.warehouse()  # donate
         self.assemble()
         self.explore()
-        self.prevent_screen_from_sleeping()
         time.sleep(10)
 
 
-def main(coord: Coordinates):
-    # get screen resolution
-    w, h = win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(0)
+def get_dpi_scaling():
+    root = tk.Tk()
+    dpi = root.winfo_fpixels('1i')
+    w, h = win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)
+    return (w, h), dpi
 
+
+def main(coord: Coordinates):
     # get handle
     hwnd = win32gui.FindWindow(None, '无尽冬日')
     l, t, r, b = win32gui.GetWindowRect(hwnd)
@@ -482,4 +482,13 @@ if __name__ == '__main__':
         'accelerate_check': [(985, 725), (197, 220, 255)],
         'snow_monster_check': [(235, 620), (126, 49, 21)]
     })
-    main(c1kx100)
+    resolution, dpi = get_dpi_scaling()
+    # dpi, 96: 100%, 144: 150%, 192: 200%
+    if resolution == (3840, 2160) and int(dpi) == 144:
+        c = c4kx150
+    elif resolution == (1920, 1080) and int(dpi) == 96:
+        c = c1kx100
+    else:
+        raise EnvironmentError(f'Expected to be used on 4kx150 or 1kx100 screen, '
+                               f'got resolution of {resolution} with {dpi} dpi scaling.')
+    main(c)
