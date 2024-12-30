@@ -1,28 +1,21 @@
 # import requirements
 # local
 import time
-from datetime import datetime
-import gc
 import tkinter as tk
-
-# pywin23
-import win32gui
-import win32api
-
-# pyautogui
-import pyautogui
-# pywinauto
-from pywinauto import Application
-
-# numpy
-import numpy as np
 
 # opencv
 import cv2
-
+# numpy
+import numpy as np
 # psutil
 import psutil
-
+# pyautogui
+import pyautogui
+import win32api
+# pywin23
+import win32gui
+# pywinauto
+from pywinauto import Application
 
 BIAS = (100, 100)
 
@@ -108,18 +101,18 @@ class Matcher:
         scale = 1.0
         matches = []
 
-        while w > 15 and h > 15:  # 如果模板图像尺寸过小，则停止缩放
-            # 在目标图像中进行模板匹配
+        while w > 15 and h > 15:
+            # match
             result = cv2.matchTemplate(target, template, cv2.TM_CCOEFF_NORMED)
 
-            # 找到匹配度大于 threshold 的位置
+            # filter
             loc = np.where(result >= threshold)
 
-            # 记录匹配结果
+            # result
             if len(loc[0]) > 0:
                 matches.extend(list(zip(*loc[::-1])))
 
-            # 缩小模板图像
+            # resize the template image
             scale *= scale_factor
             w = int(w * scale)
             h = int(h * scale)
@@ -338,9 +331,9 @@ class AutoTab:
 
 def get_dpi_scaling():
     root = tk.Tk()
-    dpi = root.winfo_fpixels('1i')
+    dpi_ = root.winfo_fpixels('1i')
     w, h = win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)
-    return (w, h), dpi
+    return (w, h), dpi_
 
 
 def main(coord: Coordinates):
