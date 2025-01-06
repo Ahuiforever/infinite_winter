@@ -72,7 +72,7 @@ class Matcher:
         self.win = win
 
     # @staticmethod
-    def color(self, xy: tuple, target_color: tuple) -> bool:
+    def color(self, xy: tuple, target_color: tuple, threshold: float = 0.9) -> bool:
         # try:
         #     print_memory_info()
         screen_shot = self.win.capture_as_image()
@@ -84,9 +84,13 @@ class Matcher:
         # cv2.imshow('image', image)
         # cv2.waitKey(0)
         pixel_color = image[xy[1], xy[0]]  # height=x, width=y
-        if tuple(pixel_color) == target_color:
+        color_dist = np.linalg.norm(np.array(pixel_color) - np.array(target_color))
+        max_dist = 441.67
+        similarity = 1 - (color_dist / max_dist)
+        if similarity >= threshold:
             return True
-        return False
+        else:
+            return False
 
     def image(self, template_path, threshold=0.9, scale_factor=0.9):
         if template_path is None:
@@ -270,7 +274,8 @@ class AutoTab:
         if (
                 (self.match.color(self.coord['donate1_check'][0], self.coord['donate1_check'][1]) and
                  not self.match.color(self.coord['recruit_check'][0], self.coord['recruit_check'][1])) or
-                self.match.color(self.coord['donate2_check'][0], self.coord['donate2_check'][1])
+                (self.match.color(self.coord['donate2_check'][0], self.coord['donate2_check'][1]) and
+                 not self.match.color(self.coord['tech_research_check'][0], self.coord['tech_research_check'][1]))
         ):
             pyautogui.click(self.coord['alliance'][0], self.coord['alliance'][1])
             time.sleep(1)
@@ -403,6 +408,7 @@ if __name__ == '__main__':
         'donate1_check': [(632, 804), (255, 30, 31)],
         'donate2_check': [(632, 663), (255, 30, 31)],
         'recruit_check': [(162, 832), (177, 114, 52)],
+        'tech_research_check': [(162, 832), (255, 255, 255)],
         'alliance': (780, 1685),
         'tech': (800, 1335),
         'donating': (750, 1450),
@@ -461,6 +467,7 @@ if __name__ == '__main__':
         'donate1_check': [(368, 462), (255, 30, 31)],  # lower donate
         'donate2_check': [(368, 392), (255, 30, 31)],
         'recruit_check': [(132, 476), (113, 79, 62)],  # in case of false detect of hero_recruit
+        'tech_research_check': [(162, 832), (255, 255, 255)],  # todo: 没改
         'alliance': (440, 900),
         'tech': (440, 730),
         'donating': (420, 785),
