@@ -110,11 +110,13 @@ class Matcher:
             result = cv2.matchTemplate(target, template, cv2.TM_CCOEFF_NORMED)
 
             # filter
-            loc = np.where(result >= threshold)
+            max_loc = np.unravel_index(np.argmax(result), result.shape)
+            loc = np.where(np.atleast_1d(result[max_loc]) >= threshold)
 
             # result
-            if len(loc[0]) > 0:
-                matches.extend(list(zip(*loc[::-1])))
+            if loc == ([0],):
+                matches.extend(max_loc[::-1])
+                break
 
             # resize the template image
             scale *= scale_factor
@@ -127,19 +129,20 @@ class Matcher:
             #     cv2.rectangle(target, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 2)
             # cv2.imshow('Matches', target)
             # cv2.waitKey(0)
-            return matches[0][0] + wh[0], matches[0][1] + wh[1]
+            return matches[0] + wh[0], matches[1] + wh[1]
         else:
             result = cv2.matchTemplate(target, template, cv2.TM_CCOEFF_NORMED)
-            loc = np.where(result >= threshold)
+            max_loc = np.unravel_index(np.argmax(result), result.shape)
+            loc = np.where(np.atleast_1d(result[max_loc]) >= threshold)
             # for pt in zip(*loc[::-1]):  # loc[::-1] 转换成 (x, y) 格式
             #     cv2.rectangle(target, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 2)
             # cv2.imshow('Matches', target)
             # cv2.waitKey(0)
 
-            if len(loc[0]) > 0:
+            if loc == ([0],):
                 # return [(pt[0] + w // 2, pt[1] + h // 2) for pt in zip(*loc[::-1])]
-                matches.extend(list(zip(*loc[::-1])))
-                return matches[0][0] + wh[0], matches[0][1] + wh[1]
+                matches.extend(max_loc[::-1])
+                return matches[0] + wh[0], matches[1] + wh[1]
             else:
                 return
 
