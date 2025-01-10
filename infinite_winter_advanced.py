@@ -2,6 +2,7 @@
 # local
 import time
 import tkinter as tk
+from datetime import datetime
 
 # opencv
 import cv2
@@ -18,6 +19,7 @@ import win32gui
 from pywinauto import Application
 
 BIAS = (100, 100)
+NEXT_QUEUE_ADD = 91
 
 
 def print_memory_info():
@@ -114,7 +116,8 @@ class Matcher:
             loc = np.where(np.atleast_1d(result[max_loc]) >= threshold)
 
             # result
-            if loc == ([0],):
+            # if loc == ([0],):
+            if np.array(loc).size > 0:
                 matches.extend(max_loc[::-1])
                 break
 
@@ -139,7 +142,7 @@ class Matcher:
             # cv2.imshow('Matches', target)
             # cv2.waitKey(0)
 
-            if loc == ([0],):
+            if np.array(loc).size > 0:
                 # return [(pt[0] + w // 2, pt[1] + h // 2) for pt in zip(*loc[::-1])]
                 matches.extend(max_loc[::-1])
                 return matches[0] + wh[0], matches[1] + wh[1]
@@ -154,6 +157,10 @@ class AutoTab:
         self.coord = coord
         self.match = Matcher(win)
 
+    @property
+    def now(self) -> str:
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+
     def triangle_check(self):
         if not self.match.color(self.coord['tri_check'][0], self.coord['tri_check'][1]):
             while True:
@@ -165,6 +172,7 @@ class AutoTab:
                         time.sleep(1)
                     break
                 self.back_check()
+                self.net_check()
         else:
             if not self.match.color(self.coord['town_check'][0], self.coord['town_check'][1]):
                 pyautogui.click(self.coord['town'][0], self.coord['town'][1])
@@ -180,9 +188,22 @@ class AutoTab:
             pyautogui.click(self.coord['back'][0], self.coord['back'][1])
             time.sleep(1)
 
+    def net_check(self):
+        if self.match.image('net_disconnect_4kx150.png') is not None:
+            print(f'{self.now} Reconnecting ...')
+            pyautogui.click(self.coord['reconnect'][0], self.coord['reconnect'][1])
+            time.sleep(2)
+            if self.match.color(self.coord['advertisement_check'][0], self.coord['advertisement_check'][1]):
+                pyautogui.click(self.coord['advertisement'][0], self.coord['advertisement'][1])
+                time.sleep(2)
+            if self.match.color(self.coord['welcome_back_check'][0], self.coord['welcome_back_check'][1]):
+                pyautogui.click(self.coord['welcome_back'][0], self.coord['welcome_back'][1])
+                time.sleep(2)
+
     def train_status_check(self, mode: str):
         mode_check = mode + '_check'
         if self.match.color(self.coord[mode_check][0], self.coord[mode_check][1]):
+            print(f'{self.now} Auto training `{mode}` ...')
             pyautogui.click(self.coord[mode][0], self.coord[mode][1])
             time.sleep(1)
             pyautogui.click(self.coord['point'][0], self.coord['point'][1])
@@ -234,6 +255,7 @@ class AutoTab:
 
         # collect
         if self.match.color(self.coord['warehouse_check'][0], self.coord['warehouse_check'][1]):
+            print(f'{self.now} Collecting warehouse ...')
             pyautogui.click(self.coord['warehouse'][0], self.coord['warehouse'][1])
             time.sleep(1)
             pyautogui.click(self.coord['point'][0], self.coord['point'][1])
@@ -258,18 +280,15 @@ class AutoTab:
                     pyautogui.click(self.coord['average'][0], self.coord['average'][1])
                     time.sleep(1)
                     pyautogui.click(self.coord['march_out'][0], self.coord['march_out'][1])
-                    time.sleep(1)
+                    time.sleep(2)
                     if self.match.color(self.coord['surpass_capacity_check'][0],
                                         self.coord['surpass_capacity_check'][1]):
                         pyautogui.click(self.coord['close_surpass_capacity'][0],
-                                        self.coord['close_surpass_capacity'][0])
-                        time.sleep(1)
-                    # elif self.match.color(self.coord['accelerate_check'][0],
-                    #                       self.coord['accelerate_check'][1]):
-                    #     pyautogui.click(self.coord['close_accelerate'][0],
-                    #                     self.coord['close_accelerate'][0])
-                    #     time.sleep(1)
+                                        self.coord['close_surpass_capacity'][1])
+                    time.sleep(1)
                     pyautogui.click(self.coord['back'][0], self.coord['back'][1])
+                    time.sleep(1)
+                    self.back_check()
             else:
                 pyautogui.click(self.coord['back'][0], self.coord['back'][1])
 
@@ -280,6 +299,7 @@ class AutoTab:
                 (self.match.color(self.coord['donate2_check'][0], self.coord['donate2_check'][1]) and
                  not self.match.color(self.coord['tech_research_check'][0], self.coord['tech_research_check'][1]))
         ):
+            print(f'{self.now} Donating ...')
             pyautogui.click(self.coord['alliance'][0], self.coord['alliance'][1])
             time.sleep(1)
             pyautogui.click(self.coord['tech'][0], self.coord['tech'][1])
@@ -312,6 +332,7 @@ class AutoTab:
 
     def explore(self):
         if self.match.color(self.coord['explore_check'][0], self.coord['explore_check'][1]):
+            print(f'{self.now} Collecting explore reward ...')
             pyautogui.click(self.coord['explore'][0], self.coord['explore'][1])
             time.sleep(1)
             pyautogui.click(self.coord['collect'][0], self.coord['collect'][1])
@@ -323,12 +344,17 @@ class AutoTab:
             pyautogui.click(self.coord['back'][0], self.coord['back'][1])
             time.sleep(1)
 
+    def scheduled_mining(self, queue_num: int = 3, level: int = 8):
+        for num in range(queue_num):
+            if self.match.color(self.coord['bench_queue_check'][0], self.coord['bench_queue_check'][1]):
+                ...
+
     def filter_for_snow_monster(self):
         ...
 
     def __call__(self):
         self.world_check()
-        self.triangle_check()
+        self.triangle_check()  # back_check, net_check
         self.train()
         self.help()
         self.warehouse()  # donate
@@ -420,9 +446,15 @@ if __name__ == '__main__':
         'explore_check': [(235, 1650), (255, 30, 31)],
         'collect': (882, 1317),
         'long_collect': (560, 1320),
-        'close_accelerate': (985, 725),
-        'accelerate_check': [(985, 725), (197, 220, 255)],
-        'snow_monster_check': [(235, 620), (126, 49, 21)]
+        'close_accelerate': (905, 725),
+        'accelerate_check': [(905, 725), (197, 220, 255)],
+        'snow_monster_check': [(235, 620), (126, 49, 21)],
+        'bench_queue_check': [(140, 630), (17, 173, 21)],
+        'reconnect': (765, 1165),
+        'advertisement_check': [(950, 220), (254, 254, 254)],
+        'advertisement': (950, 220),
+        'welcome_back_check': [(500, 1450), (37, 183, 86)],
+        'welcome_back': (500, 1450),
     })
     # 1k, 100%
     c1kx100 = Coordinates({
